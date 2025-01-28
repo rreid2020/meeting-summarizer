@@ -34,8 +34,10 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+# Serve static files only if the directory exists
+static_dir = "frontend/build/static"
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -111,4 +113,16 @@ async def root():
 async def serve_react(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404)
-    return FileResponse("frontend/build/index.html")
+    index_file = "frontend/build/index.html"
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return JSONResponse({
+        "status": "online",
+        "message": "Meeting Summarizer API is running",
+        "endpoints": {
+            "process_meeting": "/process-meeting/",
+            "health": "/health",
+            "export": "/export/{format}",
+            "oauth": "/oauth/callback/{provider}"
+        }
+    })
