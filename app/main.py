@@ -1,9 +1,11 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 import stripe
+from fastapi.staticfiles import StaticFiles
+import os
 
 from .database import SessionLocal, engine
 from .models import Base
@@ -31,6 +33,9 @@ app.add_middleware(
    allow_methods=["*"],
    allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -101,3 +106,9 @@ async def root():
             "oauth": "/oauth/callback/{provider}"
         }
     })
+
+@app.get("/{full_path:path}")
+async def serve_react(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    return FileResponse("frontend/build/index.html")
