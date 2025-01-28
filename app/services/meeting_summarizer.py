@@ -8,7 +8,7 @@ import tempfile
 
 class MeetingSummarizerService:
     def __init__(self):
-        self.model = whisper.load_model("base")
+        self.model = whisper.load_model("tiny")
         self.llm = OpenAI()
 
     async def process_meeting(self, file):
