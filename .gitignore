@@ -1,0 +1,15 @@
+# .gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+node_modules/
+.DS_Store
+*.pem
+.coverage
+htmlcov/
