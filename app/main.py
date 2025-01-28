@@ -34,9 +34,27 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
-# Serve static files first
-if os.path.exists("frontend/build/static"):
-    app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+# API routes first
+@app.get("/api/health")
+async def health_check():
+    return {"status": "healthy"}
+
+@app.get("/api")
+async def root():
+    return JSONResponse({
+        "status": "online",
+        "message": "Meeting Summarizer API is running",
+        "endpoints": {
+            "process_meeting": "/api/process-meeting/",
+            "health": "/api/health",
+            "export": "/api/export/{format}",
+            "oauth": "/api/oauth/callback/{provider}"
+        }
+    })
+
+# Serve static files
+app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -91,41 +109,8 @@ async def oauth_callback(
 ):
    return await integration_auth.handle_oauth(provider, code, db)
 
-@app.get("/api/health")
-async def health_check():
-   return {"status": "healthy"}
-
-@app.get("/api")
-async def root():
-    return JSONResponse({
-        "status": "online",
-        "message": "Meeting Summarizer API is running",
-        "endpoints": {
-            "process_meeting": "/api/process-meeting/",
-            "health": "/api/health",
-            "export": "/api/export/{format}",
-            "oauth": "/api/oauth/callback/{provider}"
-        }
-    })
-
+# Catch all route for SPA
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404)
-        
-    # Always serve index.html for non-api routes (React router will handle the path)
-    index_path = "frontend/build/index.html"
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    
-    # Fallback to API info if frontend isn't built
-    return JSONResponse({
-        "status": "online",
-        "message": "Meeting Summarizer API is running",
-        "endpoints": {
-            "process_meeting": "/api/process-meeting/",
-            "health": "/api/health",
-            "export": "/api/export/{format}",
-            "oauth": "/api/oauth/callback/{provider}"
-        }
-    })
+    if not full_path.startswith("api/"):
+        return FileResponse("frontend/build/index.html")
