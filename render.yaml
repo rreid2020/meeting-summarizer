@@ -6,4 +6,10 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0 
+        value: 3.11.0
+    plan: standard # Upgrade from free tier
+    scaling:
+      minInstances: 1
+      maxInstances: 1
+    resources:
+      memory: 1024Mi # Increase memory limit 
