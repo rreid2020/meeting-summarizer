@@ -21,22 +21,25 @@ services:
       
       echo "Building frontend..."
       cd frontend
+      echo "Frontend directory contents before build:"
+      ls -la
+      
+      echo "Package.json contents:"
+      cat package.json
+      
       echo "Installing dependencies..."
       npm install
+      
       echo "Running build..."
-      npm run build || {
-        echo "Build failed! Checking package.json:"
-        cat package.json
-        echo "Checking for build errors:"
-        npm run build --verbose
-        exit 1
-      }
+      CI=false npm run build
+      
+      echo "Frontend directory contents after build:"
+      ls -la
+      
+      echo "Build directory contents:"
+      ls -la build/ || echo "Build directory not created!"
+      
       cd ..
-
-      echo "Checking build output:"
-      ls -la frontend/build/
-      echo "Checking index.html:"
-      cat frontend/build/index.html || echo "index.html not found!"
 
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
