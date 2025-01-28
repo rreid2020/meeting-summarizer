@@ -1,8 +1,10 @@
 services:
+  # Backend API service
   - type: web
-    name: meeting-summarizer
+    name: meeting-summarizer-api
     env: python
     buildCommand: |
+      apt-get update && apt-get install -y ffmpeg
       pip install --no-cache-dir -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -15,4 +17,14 @@ services:
       minInstances: 1
       maxInstances: 1
     resources:
-      memory: 2048Mi  # Increased for whisper model 
+      memory: 2048Mi
+
+  # Frontend service
+  - type: web
+    name: meeting-summarizer-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://meeting-summarizer-api.onrender.com 
