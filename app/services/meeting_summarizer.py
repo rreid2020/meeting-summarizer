@@ -3,29 +3,27 @@ import whisper
 from langchain.chains.summarize import load_summarize_chain
 from langchain.llms import OpenAI
 from langchain.docstore.document import Document
+from fastapi import HTTPException
+import tempfile
 
 class MeetingSummarizerService:
     def __init__(self):
         self.model = whisper.load_model("base")
         self.llm = OpenAI()
 
-    async def process_meeting(self, audio_file):
-        # Transcribe
-        result = self.model.transcribe(audio_file)
-        
-        # Summarize
-        docs = [Document(page_content=result["text"])]
-        chain = load_summarize_chain(self.llm, chain_type="map_reduce")
-        summary = chain.run(docs)
-        
-        # Extract action items
-        actions = await self._extract_actions(result["text"])
-        
-        return {
-            "summary": summary,
-            "action_items": actions,
-            "duration": result.get("duration", 0)
-        }
+    async def process_meeting(self, file):
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file:
+                temp_file.write(file.read())
+                temp_file.flush()
+                
+                result = self.model.transcribe(temp_file.name)
+                return {
+                    "transcription": result["text"],
+                    "duration": result["duration"]
+                }
+        except Exception as e:
+            raise HTTPException(500, f"Error processing meeting: {str(e)}")
 
     async def _extract_actions(self, text: str):
         prompt = f"Extract action items from this text: {text}"
