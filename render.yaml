@@ -10,38 +10,43 @@ services:
       # Install Python dependencies
       pip install --no-cache-dir -r requirements.txt
 
+      # Debug - show current directory
+      echo "Current directory before frontend build:"
+      pwd
+
       # Install Node.js and build frontend
       curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
       apt-get install -y nodejs
-      
-      echo "Node.js version:"
+
+      # Debug - show Node and npm versions
       node --version
-      echo "npm version:"
       npm --version
-      
-      echo "Building frontend..."
+
+      # Build frontend
       cd frontend
-      echo "Frontend directory contents before build:"
-      ls -la
-      
-      echo "Package.json contents:"
-      cat package.json
-      
-      echo "Installing dependencies..."
       npm install
-      
-      echo "Running build..."
-      CI=false npm run build
-      
-      echo "Frontend directory contents after build:"
-      ls -la
-      
-      echo "Build directory contents:"
-      ls -la build/ || echo "Build directory not created!"
-      
+      npm run build
       cd ..
 
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+      # Debug - verify build output
+      echo "Checking if frontend/build exists:"
+      ls -la frontend/build/
+      echo "Checking if frontend/build/static exists:"
+      ls -la frontend/build/static/
+      echo "Checking if frontend/build/index.html exists:"
+      cat frontend/build/index.html
+
+      # Copy build files to a location FastAPI can serve
+      mkdir -p static
+      cp -r frontend/build/* static/
+
+    startCommand: |
+      # Debug - verify files before starting
+      echo "Checking static files before starting server:"
+      ls -la static/
+      
+      # Start the server
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

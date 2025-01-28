@@ -76,21 +76,9 @@ async def api_root():
         }
     })
 
-# Serve static files only if directories exist
-static_dir = "frontend/build/static"
-frontend_dir = "frontend/build"
-
-if os.path.exists(static_dir):
-    logger.info(f"Mounting static files from: {static_dir}")
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-else:
-    logger.warning(f"Static directory not found: {static_dir}")
-
-if os.path.exists(frontend_dir):
-    logger.info(f"Mounting frontend from: {frontend_dir}")
-    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
-else:
-    logger.warning(f"Frontend directory not found: {frontend_dir}")
+# Serve static files from the static directory
+if os.path.exists("static"):
+    app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -145,15 +133,14 @@ async def oauth_callback(
 ):
    return await integration_auth.handle_oauth(provider, code, db)
 
-# Catch all route for SPA (excluding API routes)
+# Fallback route for SPA
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404)
     
-    index_path = "frontend/build/index.html"
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
+    if os.path.exists("static/index.html"):
+        return FileResponse("static/index.html")
     return JSONResponse({
         "status": "error",
         "message": "Frontend not built"
