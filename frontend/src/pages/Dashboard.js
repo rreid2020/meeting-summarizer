@@ -1,14 +1,14 @@
 // frontend/src/pages/Dashboard.js
-import { useState, useEffect } from 'react';
-import MeetingSummarizer from '../components/MeetingSummarizer';
-import RecentMeetings from '../components/RecentMeetings';
+import React from 'react';
+import FileUpload from '../components/FileUpload';
 
-export default function Dashboard() {
+function Dashboard() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-      <MeetingSummarizer />
-      <RecentMeetings />
+      <h2 className="text-2xl font-semibold text-gray-900">Dashboard</h2>
+      <FileUpload />
     </div>
   );
 }
+
+export default Dashboard;
