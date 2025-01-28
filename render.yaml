@@ -32,14 +32,4 @@ services:
       minInstances: 1
       maxInstances: 1
     resources:
-      memory: 2048Mi
-
-  # Frontend service
-  - type: web
-    name: meeting-summarizer-frontend
-    env: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/build
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://meeting-summarizer-api.onrender.com 
+      memory: 2048Mi 
