@@ -4,9 +4,16 @@ services:
     name: meeting-summarizer
     env: python
     buildCommand: |
+      # Install system dependencies
       apt-get update && apt-get install -y ffmpeg
+
+      # Install Python dependencies with memory optimization
       pip install --no-cache-dir -r requirements.txt
-      cd frontend && npm install && npm run build
+
+      # Install Node.js and build frontend with reduced memory
+      curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+      apt-get install -y nodejs
+      cd frontend && NODE_OPTIONS=--max_old_space_size=512 npm install && npm run build
     staticPublishPath: ./frontend/build
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
