@@ -34,9 +34,9 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
-# Mount static files if they exist
-if os.path.exists("frontend/build"):
-    app.mount("/", StaticFiles(directory="frontend/build", html=True), name="static")
+# Serve static files first
+if os.path.exists("frontend/build/static"):
+    app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -109,12 +109,16 @@ async def root():
     })
 
 @app.get("/{full_path:path}")
-async def serve_react(full_path: str):
+async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404)
-    index_file = "frontend/build/index.html"
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
+        
+    # Always serve index.html for non-api routes (React router will handle the path)
+    index_path = "frontend/build/index.html"
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    # Fallback to API info if frontend isn't built
     return JSONResponse({
         "status": "online",
         "message": "Meeting Summarizer API is running",
