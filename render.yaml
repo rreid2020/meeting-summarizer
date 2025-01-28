@@ -13,25 +13,30 @@ services:
       # Install Node.js and build frontend
       curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
       apt-get install -y nodejs
-      cd frontend && npm install && npm run build
+      
+      echo "Node.js version:"
+      node --version
+      echo "npm version:"
+      npm --version
+      
+      echo "Building frontend..."
+      cd frontend
+      echo "Installing dependencies..."
+      npm install
+      echo "Running build..."
+      npm run build || {
+        echo "Build failed! Checking package.json:"
+        cat package.json
+        echo "Checking for build errors:"
+        npm run build --verbose
+        exit 1
+      }
       cd ..
 
-      # Debug - show build output
-      echo "Current directory:"
-      pwd
-      echo "Contents of current directory:"
-      ls -la
-      echo "Contents of frontend directory:"
-      ls -la frontend/
-      echo "Checking if frontend/build exists:"
-      if [ -d "frontend/build" ]; then
-          echo "frontend/build exists, contents:"
-          ls -la frontend/build/
-      else
-          echo "frontend/build does not exist!"
-          echo "Checking npm build output:"
-          cd frontend && npm run build
-      fi
+      echo "Checking build output:"
+      ls -la frontend/build/
+      echo "Checking index.html:"
+      cat frontend/build/index.html || echo "index.html not found!"
 
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
