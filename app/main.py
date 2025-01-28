@@ -52,9 +52,15 @@ async def root():
         }
     })
 
-# Serve static files
-app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
-app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")
+# Serve static files only if directories exist
+static_dir = "frontend/build/static"
+frontend_dir = "frontend/build"
+
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -113,4 +119,10 @@ async def oauth_callback(
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if not full_path.startswith("api/"):
-        return FileResponse("frontend/build/index.html")
+        index_path = "frontend/build/index.html"
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return JSONResponse({
+            "status": "error",
+            "message": "Frontend not built"
+        })

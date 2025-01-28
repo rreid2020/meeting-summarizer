@@ -21,8 +21,10 @@ services:
       pwd
       echo "Contents of current directory:"
       ls -la
-      echo "Contents of frontend/build:"
-      ls -la frontend/build/
+      echo "Contents of frontend directory:"
+      ls -la frontend/
+      echo "Contents of frontend/build (if exists):"
+      ls -la frontend/build/ || echo "Build directory not found!"
 
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
