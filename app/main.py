@@ -6,6 +6,7 @@ from typing import Optional
 import stripe
 from fastapi.staticfiles import StaticFiles
 import os
+import logging
 
 from .database import SessionLocal, engine
 from .models import Base
@@ -18,6 +19,10 @@ from .services import (
    MeetingSummarizerService
 )
 from .config import Settings
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -39,8 +44,15 @@ app.add_middleware(
 @app.head("/")
 async def serve_root():
     index_path = "frontend/build/index.html"
+    logger.info(f"Checking for index.html at: {index_path}")
+    logger.info(f"Current directory: {os.getcwd()}")
+    logger.info(f"Directory contents: {os.listdir('.')}")
+    
     if os.path.exists(index_path):
+        logger.info("Found index.html, serving frontend")
         return FileResponse(index_path)
+    
+    logger.warning("index.html not found, serving API response")
     return JSONResponse({
         "status": "online",
         "message": "Meeting Summarizer API is running"
@@ -69,10 +81,16 @@ static_dir = "frontend/build/static"
 frontend_dir = "frontend/build"
 
 if os.path.exists(static_dir):
+    logger.info(f"Mounting static files from: {static_dir}")
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+else:
+    logger.warning(f"Static directory not found: {static_dir}")
 
 if os.path.exists(frontend_dir):
+    logger.info(f"Mounting frontend from: {frontend_dir}")
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+else:
+    logger.warning(f"Frontend directory not found: {frontend_dir}")
 
 # Initialize services
 subscription_service = SubscriptionService()
