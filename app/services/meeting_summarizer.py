@@ -5,11 +5,13 @@ from langchain.llms import OpenAI
 from langchain.docstore.document import Document
 from fastapi import HTTPException
 import tempfile
+from ..config import Settings
 
 class MeetingSummarizerService:
     def __init__(self):
+        settings = Settings()
         self.model = whisper.load_model("tiny")
-        self.llm = OpenAI()
+        self.llm = OpenAI(openai_api_key=settings.openai_api_key)
 
     async def process_meeting(self, file):
         try:
