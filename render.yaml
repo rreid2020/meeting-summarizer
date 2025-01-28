@@ -23,8 +23,15 @@ services:
       ls -la
       echo "Contents of frontend directory:"
       ls -la frontend/
-      echo "Contents of frontend/build (if exists):"
-      ls -la frontend/build/ || echo "Build directory not found!"
+      echo "Checking if frontend/build exists:"
+      if [ -d "frontend/build" ]; then
+          echo "frontend/build exists, contents:"
+          ls -la frontend/build/
+      else
+          echo "frontend/build does not exist!"
+          echo "Checking npm build output:"
+          cd frontend && npm run build
+      fi
 
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:

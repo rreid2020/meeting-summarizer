@@ -34,13 +34,25 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
-# API routes first
+# Root route to handle both GET and HEAD
+@app.get("/")
+@app.head("/")
+async def serve_root():
+    index_path = "frontend/build/index.html"
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return JSONResponse({
+        "status": "online",
+        "message": "Meeting Summarizer API is running"
+    })
+
+# API routes
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy"}
 
 @app.get("/api")
-async def root():
+async def api_root():
     return JSONResponse({
         "status": "online",
         "message": "Meeting Summarizer API is running",
@@ -115,14 +127,16 @@ async def oauth_callback(
 ):
    return await integration_auth.handle_oauth(provider, code, db)
 
-# Catch all route for SPA
+# Catch all route for SPA (excluding API routes)
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    if not full_path.startswith("api/"):
-        index_path = "frontend/build/index.html"
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-        return JSONResponse({
-            "status": "error",
-            "message": "Frontend not built"
-        })
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    
+    index_path = "frontend/build/index.html"
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return JSONResponse({
+        "status": "error",
+        "message": "Frontend not built"
+    })
