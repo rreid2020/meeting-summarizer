@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 import stripe
@@ -34,10 +34,9 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
-# Serve static files only if the directory exists
-static_dir = "frontend/build/static"
-if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+# Mount static files if they exist
+if os.path.exists("frontend/build"):
+    app.mount("/", StaticFiles(directory="frontend/build", html=True), name="static")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -92,20 +91,20 @@ async def oauth_callback(
 ):
    return await integration_auth.handle_oauth(provider, code, db)
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
    return {"status": "healthy"}
 
-@app.get("/")
+@app.get("/api")
 async def root():
     return JSONResponse({
         "status": "online",
         "message": "Meeting Summarizer API is running",
         "endpoints": {
-            "process_meeting": "/process-meeting/",
-            "health": "/health",
-            "export": "/export/{format}",
-            "oauth": "/oauth/callback/{provider}"
+            "process_meeting": "/api/process-meeting/",
+            "health": "/api/health",
+            "export": "/api/export/{format}",
+            "oauth": "/api/oauth/callback/{provider}"
         }
     })
 
@@ -120,9 +119,9 @@ async def serve_react(full_path: str):
         "status": "online",
         "message": "Meeting Summarizer API is running",
         "endpoints": {
-            "process_meeting": "/process-meeting/",
-            "health": "/health",
-            "export": "/export/{format}",
-            "oauth": "/oauth/callback/{provider}"
+            "process_meeting": "/api/process-meeting/",
+            "health": "/api/health",
+            "export": "/api/export/{format}",
+            "oauth": "/api/oauth/callback/{provider}"
         }
     })
