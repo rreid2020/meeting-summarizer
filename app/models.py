@@ -22,3 +22,15 @@ class Meeting(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     duration = Column(Integer)
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    plan = Column(String)  # 'free', 'pro', etc.
+    status = Column(String)  # 'active', 'cancelled', etc.
+    meetings_used = Column(Integer, default=0)
+    stripe_subscription_id = Column(String, unique=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
