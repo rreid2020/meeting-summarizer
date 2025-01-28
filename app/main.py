@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 import stripe
@@ -87,3 +88,16 @@ async def oauth_callback(
 @app.get("/health")
 async def health_check():
    return {"status": "healthy"}
+
+@app.get("/")
+async def root():
+    return JSONResponse({
+        "status": "online",
+        "message": "Meeting Summarizer API is running",
+        "endpoints": {
+            "process_meeting": "/process-meeting/",
+            "health": "/health",
+            "export": "/export/{format}",
+            "oauth": "/oauth/callback/{provider}"
+        }
+    })
