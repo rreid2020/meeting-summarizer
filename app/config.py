@@ -1,5 +1,6 @@
 # app/config.py
 from pydantic_settings import BaseSettings
+import os
 
 class Settings(BaseSettings):
     database_url: str = "sqlite:///./test.db"  # Default SQLite for testing
@@ -9,7 +10,7 @@ class Settings(BaseSettings):
     zoom_client_secret: str = "test_zoom_secret"
     teams_client_id: str = "test_teams_id"
     teams_client_secret: str = "test_teams_secret"
-    openai_api_key: str = "test_openai_key"  # Add default test value
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "test_openai_key")
     
     class Config:
         env_file = ".env"

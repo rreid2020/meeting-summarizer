@@ -10,9 +10,9 @@ services:
         value: 3.11.0
       - key: OPENAI_API_KEY
         value: test_openai_key
-    plan: standard # Upgrade from free tier
+    plan: standard
     scaling:
       minInstances: 1
       maxInstances: 1
     resources:
-      memory: 1024Mi # Increase memory limit 
+      memory: 2048Mi  # Increased for whisper model 
