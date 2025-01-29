@@ -2,10 +2,11 @@ services:
   # Backend API service
   - type: web
     name: meeting-summarizer
-    env: python
+    runtime: python
     buildCommand: |
       # Install system dependencies
       apt-get update && apt-get install -y ffmpeg
+
 
       # Install Python dependencies
       pip install --no-cache-dir -r requirements.txt
@@ -14,11 +15,10 @@ services:
       curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
       apt-get install -y nodejs
 
+      # Show versions and directory structure
       echo "Node and npm versions:"
       node --version
       npm --version
-
-      # Show initial directory structure
       echo "Initial directory structure:"
       pwd
       ls -la
@@ -32,10 +32,8 @@ services:
       # Install dependencies and build
       echo "Installing dependencies..."
       npm install
-      
       echo "Building React app..."
       REACT_APP_API_URL=https://meeting-summarizer.onrender.com npm run build
-      
       echo "Build directory contents:"
       ls -la build/
       
@@ -43,7 +41,6 @@ services:
       cd ..
       echo "Creating static directory in app root..."
       mkdir -p /app/static
-      
       echo "Copying build files..."
       if [ -d "frontend/build" ]; then
         cp -rv frontend/build/* /app/static/
@@ -59,7 +56,6 @@ services:
       echo "Current directory: $(pwd)"
       echo "Directory contents:"
       ls -la
-      
       if [ -d "/app/static" ]; then
         echo "Static directory exists:"
         ls -la /app/static/
@@ -68,24 +64,20 @@ services:
         mkdir -p /app/static
         echo "Created empty static directory"
       fi
-      
       uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: "3.11.11"
       - key: OPENAI_API_KEY
         value: test_openai_key
-      - key: REACT_APP_API_URL
-        value: https://meeting-summarizer.onrender.com
       - key: NODE_ENV
         value: production
       - key: CI
-        value: false
+        value: "false"
       - key: GENERATE_SOURCEMAP
-        value: false
+        value: "false"
     plan: pro
     scaling:
       minInstances: 1
       maxInstances: 1
-    resources:
-      memory: 2048Mi
