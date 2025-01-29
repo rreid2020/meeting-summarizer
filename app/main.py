@@ -40,14 +40,16 @@ app.add_middleware(
 )
 
 # Get absolute path to static directory
-STATIC_DIR = os.path.join(os.getcwd(), "static")
+STATIC_DIR = os.path.abspath(os.path.join(os.getcwd(), "static"))
+logger.info(f"Static directory path: {STATIC_DIR}")
 
-# Serve static files from absolute path
+# Serve static files
 if os.path.exists(STATIC_DIR):
-    logger.info(f"Mounting static files from: {STATIC_DIR}")
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+    logger.info(f"Static directory exists at {STATIC_DIR}")
+    app.mount("/static", StaticFiles(directory=os.path.join(STATIC_DIR, "static")), name="static")
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
 else:
-    logger.warning(f"Static directory not found at: {STATIC_DIR}")
+    logger.warning(f"Static directory not found at {STATIC_DIR}")
 
 # Root route to handle both GET and HEAD
 @app.get("/")
@@ -139,7 +141,7 @@ async def oauth_callback(
 ):
    return await integration_auth.handle_oauth(provider, code, db)
 
-# Fallback route for SPA
+# Catch-all route
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
@@ -147,11 +149,12 @@ async def serve_spa(full_path: str):
     
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
-        logger.info(f"Serving index.html from: {index_path}")
+        logger.info(f"Serving {index_path}")
         return FileResponse(index_path)
     
-    logger.warning(f"index.html not found at: {index_path}")
+    logger.error(f"index.html not found at {index_path}")
     return JSONResponse({
         "status": "error",
-        "message": "Frontend not built"
+        "message": "Frontend not built",
+        "path": index_path
     })

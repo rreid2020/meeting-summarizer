@@ -10,49 +10,45 @@ services:
       # Install Python dependencies
       pip install --no-cache-dir -r requirements.txt
 
-      # Debug - show current directory
-      echo "Current directory before frontend build:"
-      pwd
-      ls -la
-
-      # Install Node.js and build frontend
+      # Install Node.js LTS
       curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
       apt-get install -y nodejs
 
-      # Debug - show Node and npm versions
-      echo "Node version:"
+      echo "Node and npm versions:"
       node --version
-      echo "npm version:"
       npm --version
 
-      # Build frontend with detailed output
+      # Build frontend
       echo "Building frontend..."
       cd frontend
-      echo "Installing dependencies..."
-      CI=false npm install --verbose
-      echo "Running build..."
-      CI=false npm run build --verbose
-      cd ..
-
-      # Create static directory and copy files
-      echo "Creating static directory..."
-      mkdir -p /app/static
-      echo "Copying build files..."
-      cp -rv frontend/build/* /app/static/
       
-      # Verify files
-      echo "Checking static directory contents:"
-      ls -la /app/static/
+      # Debug frontend directory
+      echo "Frontend directory contents:"
+      ls -la
+      
+      # Install dependencies and build
+      npm ci
+      GENERATE_SOURCEMAP=false npm run build
+      
+      echo "Build output:"
+      ls -la build/
+      
+      # Copy to static directory
+      cd ..
+      rm -rf static
+      cp -r frontend/build static
+      
+      echo "Final static directory:"
+      ls -la static/
 
     startCommand: |
-      # Final verification
-      echo "Final directory structure:"
+      echo "Starting server..."
+      echo "Current directory structure:"
       pwd
       ls -la
       echo "Static directory contents:"
-      ls -la /app/static/
+      ls -la static/
       
-      # Start server
       uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -65,9 +61,11 @@ services:
         value: production
       - key: CI
         value: false
-    plan: standard
+      - key: GENERATE_SOURCEMAP
+        value: false
+    plan: pro
     scaling:
       minInstances: 1
       maxInstances: 1
     resources:
-      memory: 2048Mi 
+      memory: 2048Mi
