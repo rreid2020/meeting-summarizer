@@ -1,55 +1,39 @@
 services:
   # Backend API service
   - type: web
-    name: meeting-summarizer
+    name: meeting-summarizer-api
     runtime: python
     repo: https://github.com/rreid2020/meeting-summarizer.git
     branch: main
     buildCommand: |
       # Install system dependencies
       apt-get update && apt-get install -y ffmpeg
-
-      # Create static directory early
-      mkdir -p /app/static
-      chmod 755 /app/static
-
       # Install Python dependencies
       pip install --no-cache-dir -r requirements.txt
-
-      # Install Node.js and build frontend
-      curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-      apt-get install -y nodejs
-
-      # Build frontend
-      cd frontend
-      npm install
-      REACT_APP_API_URL=https://meeting-summarizer.onrender.com npm run build
-
-      # Copy build files with verbose output
-      echo "Copying build files to static directory..."
-      cp -rv build/* /app/static/
-      
-      # Verify static directory contents
-      echo "Final static directory contents:"
-      ls -la /app/static/
-
-    startCommand: |
-      echo "Verifying static directory..."
-      ls -la /app/static/
-      uvicorn app.main:app --host 0.0.0.0 --port $PORT
-
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.11"
       - key: OPENAI_API_KEY
         sync: false
+    plan: pro
+    scaling:
+      minInstances: 1
+      maxInstances: 1
+
+  # Frontend static site
+  - type: web
+    name: meeting-summarizer-frontend
+    runtime: static
+    buildCommand: |
+      cd frontend
+      npm install
+      REACT_APP_API_URL=https://meeting-summarizer-api.onrender.com npm run build
+    staticPublishPath: ./frontend/build
+    envVars:
       - key: NODE_ENV
         value: production
       - key: CI
         value: "false"
       - key: GENERATE_SOURCEMAP
         value: "false"
-    plan: pro
-    scaling:
-      minInstances: 1
-      maxInstances: 1
