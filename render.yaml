@@ -18,47 +18,56 @@ services:
       node --version
       npm --version
 
+      # Show initial directory structure
+      echo "Initial directory structure:"
+      pwd
+      ls -la
+
       # Build frontend
       echo "Building frontend..."
       cd frontend
       echo "Frontend directory contents:"
       ls -la
       
-      # Clean install dependencies
+      # Install dependencies and build
       echo "Installing dependencies..."
-      rm -rf node_modules package-lock.json
       npm install
       
       echo "Building React app..."
-      npm run build
+      REACT_APP_API_URL=https://meeting-summarizer.onrender.com npm run build
       
       echo "Build directory contents:"
       ls -la build/
       
       # Copy to static directory
       cd ..
-      echo "Creating static directory..."
-      mkdir -p static
-      echo "Copying build files..."
-      cp -r frontend/build/* static/
-      echo "Copying static files..."
-      mkdir -p static/static
-      cp -r frontend/build/static/* static/static/
+      echo "Creating static directory in app root..."
+      mkdir -p /app/static
       
-      echo "Final directory structure:"
-      ls -la
-      echo "Static directory contents:"
-      ls -la static/
-      echo "Static/static directory contents:"
-      ls -la static/static/
+      echo "Copying build files..."
+      if [ -d "frontend/build" ]; then
+        cp -rv frontend/build/* /app/static/
+        echo "Static directory after copy:"
+        ls -la /app/static/
+      else
+        echo "ERROR: frontend/build directory not found!"
+        exit 1
+      fi
 
     startCommand: |
       echo "Starting server..."
       echo "Current directory: $(pwd)"
       echo "Directory contents:"
       ls -la
-      echo "Static directory contents:"
-      ls -la static/
+      
+      if [ -d "/app/static" ]; then
+        echo "Static directory exists:"
+        ls -la /app/static/
+      else
+        echo "ERROR: Static directory not found!"
+        mkdir -p /app/static
+        echo "Created empty static directory"
+      fi
       
       uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:

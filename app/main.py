@@ -40,16 +40,22 @@ app.add_middleware(
 )
 
 # Get absolute path to static directory
-STATIC_DIR = os.path.abspath(os.path.join(os.getcwd(), "static"))
+STATIC_DIR = "/app/static"
 logger.info(f"Static directory path: {STATIC_DIR}")
 
 # Serve static files
 if os.path.exists(STATIC_DIR):
     logger.info(f"Static directory exists at {STATIC_DIR}")
-    app.mount("/static", StaticFiles(directory=os.path.join(STATIC_DIR, "static")), name="static")
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
+    try:
+        # Mount the static files
+        app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
+        logger.info("Successfully mounted static files")
+    except Exception as e:
+        logger.error(f"Error mounting static files: {str(e)}")
 else:
     logger.error(f"Static directory not found at {STATIC_DIR}")
+    logger.info(f"Current directory: {os.getcwd()}")
+    logger.info(f"Directory contents: {os.listdir('.')}")
 
 # API routes
 @app.get("/api/health")
@@ -139,5 +145,5 @@ async def serve_spa(full_path: str):
         "message": "Frontend not built",
         "path": index_path,
         "cwd": os.getcwd(),
-        "dir_contents": os.listdir(".")
+        "dir_contents": os.listdir(STATIC_DIR) if os.path.exists(STATIC_DIR) else "directory not found"
     })
