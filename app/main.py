@@ -1,9 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
-from sqlalchemy.orm import Session
-from typing import Optional
-import stripe
 from fastapi.staticfiles import StaticFiles
 import os
 import logging
@@ -32,32 +29,21 @@ settings = Settings()
 
 # CORS middleware
 app.add_middleware(
-   CORSMiddleware,
-   allow_origins=["*"],
-   allow_credentials=True, 
-   allow_methods=["*"],
-   allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure this based on your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Get absolute path to static directory
-STATIC_DIR = "/app/static"
-logger.info(f"Static directory path: {STATIC_DIR}")
-
 # Serve static files
-if os.path.exists(STATIC_DIR):
-    logger.info(f"Static directory exists at {STATIC_DIR}")
-    try:
-        # Mount the static files
-        app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
-        logger.info("Successfully mounted static files")
-    except Exception as e:
-        logger.error(f"Error mounting static files: {str(e)}")
+if os.path.exists("frontend/build"):
+    app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")
+    logger.info("Mounted frontend static files")
 else:
-    logger.error(f"Static directory not found at {STATIC_DIR}")
-    logger.info(f"Current directory: {os.getcwd()}")
-    logger.info(f"Directory contents: {os.listdir('.')}")
+    logger.warning("Frontend build directory not found")
 
-# API routes
+# API routes only - remove static file handling
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy"}
@@ -128,22 +114,16 @@ async def oauth_callback(
 ):
    return await integration_auth.handle_oauth(provider, code, db)
 
-# Catch-all route
+# Catch-all route for SPA
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404)
     
-    index_path = os.path.join(STATIC_DIR, "index.html")
+    index_path = "frontend/build/index.html"
     if os.path.exists(index_path):
-        logger.info(f"Serving {index_path}")
         return FileResponse(index_path)
-    
-    logger.error(f"index.html not found at {index_path}")
     return JSONResponse({
         "status": "error",
-        "message": "Frontend not built",
-        "path": index_path,
-        "cwd": os.getcwd(),
-        "dir_contents": os.listdir(STATIC_DIR) if os.path.exists(STATIC_DIR) else "directory not found"
+        "message": "Frontend not built"
     })

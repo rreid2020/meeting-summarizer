@@ -1,15 +1,23 @@
 services:
   # Backend API service
   - type: web
-    name: meeting-summarizer-api
+    name: meeting-summarizer
     runtime: python
-    repo: https://github.com/rreid2020/meeting-summarizer.git
-    branch: main
     buildCommand: |
       # Install system dependencies
       apt-get update && apt-get install -y ffmpeg
+      
       # Install Python dependencies
-      pip install --no-cache-dir -r requirements.txt
+      pip install -r requirements.txt
+      
+      # Install Node and build frontend
+      curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+      apt-get install -y nodejs
+      cd frontend
+      npm install
+      npm run build
+      cd ..
+      
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -20,20 +28,3 @@ services:
     scaling:
       minInstances: 1
       maxInstances: 1
-
-  # Frontend static site
-  - type: web
-    name: meeting-summarizer-frontend
-    runtime: static
-    buildCommand: |
-      cd frontend
-      npm install
-      REACT_APP_API_URL=https://meeting-summarizer-api.onrender.com npm run build
-    staticPublishPath: ./frontend/build
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: CI
-        value: "false"
-      - key: GENERATE_SOURCEMAP
-        value: "false"
