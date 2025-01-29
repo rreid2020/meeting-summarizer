@@ -39,6 +39,16 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
+# Get absolute path to static directory
+STATIC_DIR = os.path.join(os.getcwd(), "static")
+
+# Serve static files from absolute path
+if os.path.exists(STATIC_DIR):
+    logger.info(f"Mounting static files from: {STATIC_DIR}")
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+else:
+    logger.warning(f"Static directory not found at: {STATIC_DIR}")
+
 # Root route to handle both GET and HEAD
 @app.get("/")
 @app.head("/")
@@ -75,10 +85,6 @@ async def api_root():
             "oauth": "/api/oauth/callback/{provider}"
         }
     })
-
-# Serve static files from the static directory
-if os.path.exists("static"):
-    app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 # Initialize services
 subscription_service = SubscriptionService()
@@ -139,8 +145,12 @@ async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404)
     
-    if os.path.exists("static/index.html"):
-        return FileResponse("static/index.html")
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        logger.info(f"Serving index.html from: {index_path}")
+        return FileResponse(index_path)
+    
+    logger.warning(f"index.html not found at: {index_path}")
     return JSONResponse({
         "status": "error",
         "message": "Frontend not built"

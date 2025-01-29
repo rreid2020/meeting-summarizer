@@ -13,39 +13,46 @@ services:
       # Debug - show current directory
       echo "Current directory before frontend build:"
       pwd
+      ls -la
 
       # Install Node.js and build frontend
       curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
       apt-get install -y nodejs
 
       # Debug - show Node and npm versions
+      echo "Node version:"
       node --version
+      echo "npm version:"
       npm --version
 
-      # Build frontend
+      # Build frontend with detailed output
+      echo "Building frontend..."
       cd frontend
-      npm install
-      npm run build
+      echo "Installing dependencies..."
+      CI=false npm install --verbose
+      echo "Running build..."
+      CI=false npm run build --verbose
       cd ..
 
-      # Debug - verify build output
-      echo "Checking if frontend/build exists:"
-      ls -la frontend/build/
-      echo "Checking if frontend/build/static exists:"
-      ls -la frontend/build/static/
-      echo "Checking if frontend/build/index.html exists:"
-      cat frontend/build/index.html
-
-      # Copy build files to a location FastAPI can serve
-      mkdir -p static
-      cp -r frontend/build/* static/
+      # Create static directory and copy files
+      echo "Creating static directory..."
+      mkdir -p /app/static
+      echo "Copying build files..."
+      cp -rv frontend/build/* /app/static/
+      
+      # Verify files
+      echo "Checking static directory contents:"
+      ls -la /app/static/
 
     startCommand: |
-      # Debug - verify files before starting
-      echo "Checking static files before starting server:"
-      ls -la static/
+      # Final verification
+      echo "Final directory structure:"
+      pwd
+      ls -la
+      echo "Static directory contents:"
+      ls -la /app/static/
       
-      # Start the server
+      # Start server
       uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -54,6 +61,10 @@ services:
         value: test_openai_key
       - key: REACT_APP_API_URL
         value: https://meeting-summarizer.onrender.com
+      - key: NODE_ENV
+        value: production
+      - key: CI
+        value: false
     plan: standard
     scaling:
       minInstances: 1
