@@ -49,26 +49,7 @@ if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=os.path.join(STATIC_DIR, "static")), name="static")
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
 else:
-    logger.warning(f"Static directory not found at {STATIC_DIR}")
-
-# Root route to handle both GET and HEAD
-@app.get("/")
-@app.head("/")
-async def serve_root():
-    index_path = "frontend/build/index.html"
-    logger.info(f"Checking for index.html at: {index_path}")
-    logger.info(f"Current directory: {os.getcwd()}")
-    logger.info(f"Directory contents: {os.listdir('.')}")
-    
-    if os.path.exists(index_path):
-        logger.info("Found index.html, serving frontend")
-        return FileResponse(index_path)
-    
-    logger.warning("index.html not found, serving API response")
-    return JSONResponse({
-        "status": "online",
-        "message": "Meeting Summarizer API is running"
-    })
+    logger.error(f"Static directory not found at {STATIC_DIR}")
 
 # API routes
 @app.get("/api/health")
@@ -156,5 +137,7 @@ async def serve_spa(full_path: str):
     return JSONResponse({
         "status": "error",
         "message": "Frontend not built",
-        "path": index_path
+        "path": index_path,
+        "cwd": os.getcwd(),
+        "dir_contents": os.listdir(".")
     })

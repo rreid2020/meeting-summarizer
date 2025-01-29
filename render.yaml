@@ -21,30 +21,41 @@ services:
       # Build frontend
       echo "Building frontend..."
       cd frontend
-      
-      # Debug frontend directory
       echo "Frontend directory contents:"
       ls -la
       
-      # Install dependencies and build
-      npm ci
-      GENERATE_SOURCEMAP=false npm run build
+      # Clean install dependencies
+      echo "Installing dependencies..."
+      rm -rf node_modules package-lock.json
+      npm install
       
-      echo "Build output:"
+      echo "Building React app..."
+      npm run build
+      
+      echo "Build directory contents:"
       ls -la build/
       
       # Copy to static directory
       cd ..
-      rm -rf static
-      cp -r frontend/build static
+      echo "Creating static directory..."
+      mkdir -p static
+      echo "Copying build files..."
+      cp -r frontend/build/* static/
+      echo "Copying static files..."
+      mkdir -p static/static
+      cp -r frontend/build/static/* static/static/
       
-      echo "Final static directory:"
+      echo "Final directory structure:"
+      ls -la
+      echo "Static directory contents:"
       ls -la static/
+      echo "Static/static directory contents:"
+      ls -la static/static/
 
     startCommand: |
       echo "Starting server..."
-      echo "Current directory structure:"
-      pwd
+      echo "Current directory: $(pwd)"
+      echo "Directory contents:"
       ls -la
       echo "Static directory contents:"
       ls -la static/
