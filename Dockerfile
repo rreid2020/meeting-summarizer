@@ -1,9 +1,18 @@
 # Use Node.js for frontend build
 FROM node:18 AS frontend-builder
 WORKDIR /frontend
+
+# Copy package files first to leverage Docker cache
 COPY frontend/package*.json ./
-RUN npm install
+
+# Install dependencies including axios and babel plugin
+RUN npm install && \
+    npm install axios @babel/plugin-proposal-private-property-in-object --save-dev
+
+# Copy frontend source
 COPY frontend/ ./
+
+# Build frontend
 RUN npm run build
 
 # Python backend with frontend files
